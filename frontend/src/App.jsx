@@ -20,8 +20,11 @@ function App() {
   const [adminAuthForm, setAdminAuthForm] = useState({ username: "", password: "" });
   const [adminAuthLoading, setAdminAuthLoading] = useState(false);
   const [showAdminPassword, setShowAdminPassword] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const avatarLetter = user?.username ? user.username.charAt(0).toUpperCase() : "?";
   const avatarUrl = user?.avatar || user?.avatar_url;
+  const storageKey = "visorhr_user";
+  const containerClass = user ? "auth-container dashboard-mode" : "auth-container";
 
   // Check if users exist on mount
   useEffect(() => {
@@ -46,64 +49,22 @@ function App() {
     return () => clearTimeout(timer);
   }, [message]);
 
-  if (user) {
-    return (
-      <main className="auth-container">
-        <div className="blob blob-1"></div>
-        <div className="blob blob-2"></div>
-        <div className="blob blob-3"></div>
+  // Restore user session from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem(storageKey);
+    if (!saved) return;
+    try {
+      const parsed = JSON.parse(saved);
+      if (parsed?.username) setUser(parsed);
+    } catch (err) {
+      console.warn("Failed to parse stored user", err);
+    }
+  }, []);
 
-        <div className="dashboard-layout">
-          <aside className="dashboard-sidebar">
-            <div className="sidebar-top">
-              <div className="dashboard-brand-icon">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                  <path d="M21 3C21 3 15 3 12 8C9 13 3 12 3 12" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-              </div>
-              <div>
-                <h2 className="sidebar-title">Visor HR</h2>
-                <p className="sidebar-subtitle">Human Resource Hub</p>
-              </div>
-            </div>
-
-            <div className="sidebar-bottom">
-              <div className="avatar-circle">
-                {avatarUrl ? <img src={avatarUrl} alt="Profile avatar" /> : <span>{avatarLetter}</span>}
-              </div>
-              <div className="sidebar-user">
-                <span className="user-name">{user.username}</span>
-                {user.email && <span className="user-email">{user.email}</span>}
-              </div>
-              <button className="btn-pill btn-logout" onClick={logout} disabled={loading}>
-                {loading ? <span className="loader"></span> : "Logout"}
-              </button>
-            </div>
-          </aside>
-
-          <section className="dashboard-main">
-            <div className="dashboard-card">
-              <div className="dashboard-heading">
-                <h2>Dashboard</h2>
-                <p>Welcome back, {user.username}.</p>
-              </div>
-
-              {message.text && (
-                <div className={`alert ${message.type === "error" ? "alert-error" : "alert-success"}`}>
-                  {message.text}
-                </div>
-              )}
-
-              <div className="dashboard-placeholder">
-                <p>Ready to manage your HR tasks.</p>
-              </div>
-            </div>
-          </section>
-        </div>
-      </main>
-    );
-  }
+  // Close sidebar when logging out or leaving dashboard
+  useEffect(() => {
+    if (!user) setSidebarOpen(false);
+  }, [user]);
 
   const handleChange = (setter) => (evt) => {
     const { name, value } = evt.target;
@@ -158,7 +119,11 @@ function App() {
         throw new Error(data.message || "Request failed");
       }
       setMessage({ type: "success", text: data.message || `${mode} successful` });
-      setUser(data.user || null);
+      // Ensure we always have a user object even if API omits one
+      const fallbackUser = { username: payload.username, email: payload.email };
+      const nextUser = data.user || fallbackUser;
+      setUser(nextUser);
+      localStorage.setItem(storageKey, JSON.stringify(nextUser));
     } catch (error) {
       setMessage({ type: "error", text: error.message });
     } finally {
@@ -180,6 +145,7 @@ function App() {
       }
       setMessage({ type: "success", text: data.message || "Logged out" });
       setUser(null);
+      localStorage.removeItem(storageKey);
     } catch (error) {
       setMessage({ type: "error", text: error.message });
     } finally {
@@ -197,8 +163,112 @@ function App() {
     submit("register");
   };
 
+  if (user) {
+    return (
+      <main className={containerClass}>
+        <div className="blob blob-1"></div>
+        <div className="blob blob-2"></div>
+        <div className="blob blob-3"></div>
+
+        <div className="dashboard-layout">
+          <button
+            className="sidebar-toggle"
+            type="button"
+            aria-label="Open navigation"
+            onClick={() => setSidebarOpen((open) => !open)}
+          >
+            <div className="sidebar-toggle-brand">
+              <div className="dashboard-brand-icon">
+                <svg width="52" height="52" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                  <path d="M21 3C21 3 15 3 12 8C9 13 3 12 3 12" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </div>
+              <span className="sidebar-title">Visor HR</span>
+            </div>
+            <div className="hamburger-bars">
+              <svg width="24" height="24" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g fill="currentColor">
+                  <rect x="21.6" y="53.6" width="10.64" height="5.92" />
+                  <rect x="21.62" y="38.36" width="21.12" height="5.92" />
+                  <rect x="21.62" y="23.14" width="31.64" height="5.92" />
+                </g>
+              </svg>
+            </div>
+          </button>
+
+          <aside className={`dashboard-sidebar ${sidebarOpen ? "open" : ""}`}>
+            <button className="sidebar-close" type="button" aria-label="Close navigation" onClick={() => setSidebarOpen(false)}>
+              ✕
+            </button>
+            <div className="sidebar-top">
+              <div className="dashboard-brand-icon">
+                <svg width="52" height="52" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                  <path d="M21 3C21 3 15 3 12 8C9 13 3 12 3 12" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </div>
+              <div className="sidebar-branding">
+                <h2 className="sidebar-title">Visor HR</h2>
+              </div>
+            </div>
+
+            <div className="sidebar-nav">
+              <button className="sidebar-nav-item active" type="button">Overview</button>
+              <button className="sidebar-nav-item" type="button">People</button>
+              <button className="sidebar-nav-item" type="button">Leave</button>
+              <button className="sidebar-nav-item" type="button">Payroll</button>
+              <button className="sidebar-nav-item" type="button">Settings</button>
+            </div>
+
+              <div className="sidebar-bottom">
+                <div className="sidebar-bottom-info">
+                  <div className="avatar-circle">
+                    {avatarUrl ? <img src={avatarUrl} alt="Profile avatar" /> : <span>{avatarLetter}</span>}
+                  </div>
+                  <div className="sidebar-user">
+                    <span className="user-name">{user.username}</span>
+                    {user.email && <span className="user-email">{user.email}</span>}
+                  </div>
+                </div>
+                <button
+                  className="logout-bar"
+                  type="button"
+                  onClick={logout}
+                  disabled={loading}
+                  aria-label="Logout"
+                >
+                  {loading ? "Logging out..." : "Logout"}
+                </button>
+            </div>
+          </aside>
+
+          <section className="dashboard-main">
+            {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)}></div>}
+            <div className="dashboard-card">
+              <div className="dashboard-heading">
+                <h2>Dashboard</h2>
+                <p>Welcome back, {user.username}.</p>
+              </div>
+
+              {message.text && (
+                <div className={`alert ${message.type === "error" ? "alert-error" : "alert-success"}`}>
+                  {message.text}
+                </div>
+              )}
+
+              <div className="dashboard-placeholder">
+                <p>Ready to manage your HR tasks.</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="auth-container">
+    <main className={containerClass}>
       {/* Background Blobs */}
       <div className="blob blob-1"></div>
       <div className="blob blob-2"></div>
