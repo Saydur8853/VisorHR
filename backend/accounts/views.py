@@ -93,3 +93,52 @@ def logout(request):
     if request.user.is_authenticated:
         auth_logout(request)
     return JsonResponse({"success": True, "message": "Logged out."})
+
+
+@csrf_exempt
+@require_POST
+def validate_admin(request):
+    """Validate superadmin credentials for gated registration."""
+    data = _parse_body(request)
+    if data is None:
+        return _json_error("Invalid JSON body.")
+
+    username_or_email = (data.get("username") or "").strip()
+    password = data.get("password") or ""
+
+    if not username_or_email or not password:
+        return _json_error("Username/email and password are required.")
+
+    User = get_user_model()
+    # Try to find user by username or email
+    user = User.objects.filter(username=username_or_email).first()
+    if not user:
+        user = User.objects.filter(email=username_or_email).first()
+
+    if not user:
+        return _json_error("Invalid credentials.", status=401)
+
+    # Check if user is superadmin
+    if not user.is_superuser:
+        return _json_error("Only superadmin can authorize registrations.", status=403)
+
+    # Verify password
+    if not user.check_password(password):
+        return _json_error("Invalid credentials.", status=401)
+
+    return JsonResponse({
+        "success": True,
+        "message": "Admin validated.",
+    })
+
+
+@csrf_exempt
+def check_user_exists(request):
+    """Check if any users exist in the system."""
+    User = get_user_model()
+    user_count = User.objects.count()
+    return JsonResponse({
+        "success": True,
+        "users_exist": user_count > 0,
+        "user_count": user_count,
+    })
