@@ -1,0 +1,22 @@
+{
+  "name": "visorhr-frontend",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:backend": "cd ..\\backend && .venv\\Scripts\\python.exe manage.py runserver 0.0.0.0:8000",
+    "dev:full": "concurrently \"npm run dev:backend\" \"npm run dev\"",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "@vitejs/plugin-react": "^4.3.3",
+    "vite": "^5.4.8"
+  }
+}

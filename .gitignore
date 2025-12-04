@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+.eggs/
+*.sqlite3
+*.db
+*.log
+
+# Django
+staticfiles/
+media/
+local_settings.py
+backend/runserver*.log
+backend/.venv/
+
+# Environments
+.env
+.env.*
+.venv/
+venv/
+env/
+.python-version
+
+# Testing and type checking
+.pytest_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Node / JS
+node_modules/
+frontend/node_modules/
+dist/
+build/
+frontend/dist/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.vite/
+frontend/.env
+
+# IDEs / system
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
