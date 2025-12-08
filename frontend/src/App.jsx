@@ -3,6 +3,77 @@ import "./index.css";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
 const authBase = `${apiBaseUrl.replace(/\/$/, "")}/auth`;
+const employeeBase = `${apiBaseUrl.replace(/\/$/, "")}/employee`;
+const EMP_DRAFT_KEY = "visorhr_emp_draft";
+
+const initialEmpFormState = () => ({
+  emp_code: "",
+  emp_name: "",
+  bang_emp_name: "",
+  card_no: "",
+  emp_photo: "",
+  father_name: "",
+  bang_father_name: "",
+  mother_name: "",
+  bang_mother_name: "",
+  husband_name: "",
+  bang_husband_name: "",
+  date_of_birth: "",
+  sex: "",
+  religion: "",
+  blood_group: "",
+  marital_status: "",
+  nationality: "",
+  town_of_birth: "",
+  child_male: "",
+  child_female: "",
+  education: "",
+  employement: "",
+  passed_year: "",
+  last_exp: "",
+  curr_activity: "",
+  sob: "",
+  contractual: "N",
+  e_mail: "",
+  contact_no: "",
+  emergency_cell: "",
+  emrg_cell_no: "",
+  emrg_address: "",
+  national_id: "",
+  birth_certificate_no: "",
+  smart_id: "",
+  pasport_no: "",
+  tin_no: "",
+  nominee_cell_no: "",
+  ref_contact_name: "",
+  ref_relation: "",
+  ref_address: "",
+  present_vill: "",
+  bang_present_vill: "",
+  present_house: "",
+  present_ps: "",
+  bang_present_ps: "",
+  present_dist: "",
+  bang_present_dist: "",
+  present_address: "",
+  bang_present_post: "",
+  present_postal_code: "",
+  parmanent_house: "",
+  parmanent_vill: "",
+  bang_permanent_vill: "",
+  parmanent_ps: "",
+  bang_permanent_ps: "",
+  parmanent_dist: "",
+  bang_permanent_dist: "",
+  permanent_address: "",
+  parmenent_address: "",
+  bang_permanent_post: "",
+  permanent_postal_code: "",
+  pre_house_owner: "",
+  pre_house_owner_bang: "",
+  remarks: "",
+  updated_date: "",
+});
 
 const Button = ({ children, variant = "primary", className = "", ...props }) => {
   const classes = ["btn-pill", variant === "ghost" ? "ghost" : "", className].join(" ").trim();
@@ -211,7 +282,14 @@ const FieldControl = ({ field, value, onChange, empCode }) => {
         {label}
         {warnIfEmpty && <span className="required-star">*</span>}
       </span>
-      <input {...inputProps} />
+      <input {...inputProps} list={field.datalist?.length ? `${name}-options` : undefined} />
+      {field.datalist?.length ? (
+        <datalist id={`${name}-options`}>
+          {field.datalist.map((opt) => (
+            <option key={opt} value={opt} />
+          ))}
+        </datalist>
+      ) : null}
     </label>
   );
 };
@@ -226,74 +304,8 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegPassword, setShowRegPassword] = useState(false);
-  const [empForm, setEmpForm] = useState({
-    emp_code: "",
-    emp_name: "",
-    bang_emp_name: "",
-    card_no: "",
-    emp_photo: "",
-    father_name: "",
-    bang_father_name: "",
-    mother_name: "",
-    bang_mother_name: "",
-    husband_name: "",
-    bang_husband_name: "",
-    date_of_birth: "",
-    sex: "",
-    religion: "",
-    blood_group: "",
-    marital_status: "",
-    nationality: "",
-    town_of_birth: "",
-    child_male: "",
-    child_female: "",
-    education: "",
-    employement: "",
-    passed_year: "",
-    last_exp: "",
-    curr_activity: "",
-    sob: "",
-    contractual: "",
-    e_mail: "",
-    contact_no: "",
-    emergency_cell: "",
-    emrg_cell_no: "",
-    emrg_address: "",
-    national_id: "",
-    birth_certificate_no: "",
-    smart_id: "",
-    pasport_no: "",
-    tin_no: "",
-    nominee_cell_no: "",
-    ref_contact_name: "",
-    ref_relation: "",
-    ref_address: "",
-    present_vill: "",
-    bang_present_vill: "",
-    present_house: "",
-    present_ps: "",
-    bang_present_ps: "",
-    present_dist: "",
-    bang_present_dist: "",
-    present_address: "",
-    bang_present_post: "",
-    present_postal_code: "",
-    parmanent_house: "",
-    parmanent_vill: "",
-    bang_permanent_vill: "",
-    parmanent_ps: "",
-    bang_permanent_ps: "",
-    parmanent_dist: "",
-    bang_permanent_dist: "",
-    permanent_address: "",
-    parmenent_address: "",
-    bang_permanent_post: "",
-    permanent_postal_code: "",
-    pre_house_owner: "",
-    pre_house_owner_bang: "",
-    remarks: "",
-    updated_date: "",
-  });
+  const [savingEmp, setSavingEmp] = useState(false);
+  const [empForm, setEmpForm] = useState(() => initialEmpFormState());
 
   // Admin-gated registration state
   const [usersExist, setUsersExist] = useState(false);
@@ -354,6 +366,41 @@ function App() {
     return () => clearInterval(timer);
   }, []);
 
+  // Restore draft from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(EMP_DRAFT_KEY);
+    if (!saved) return;
+    try {
+      const parsed = JSON.parse(saved);
+      if (parsed && typeof parsed === "object") {
+        setEmpForm((prev) => ({ ...prev, ...parsed }));
+      }
+    } catch (err) {
+      console.warn("Failed to parse employee draft", err);
+    }
+  }, []);
+
+  const persistDraft = (draft) => {
+    const { emp_photo, emp_signature, ...rest } = draft;
+    try {
+      localStorage.setItem(EMP_DRAFT_KEY, JSON.stringify(rest));
+    } catch (err) {
+      console.warn("Failed to save employee draft", err);
+    }
+  };
+
+  // Persist draft to localStorage (text fields only)
+  useEffect(() => {
+    persistDraft(empForm);
+  }, [empForm]);
+
+  // Save right before unload to capture latest keystrokes
+  useEffect(() => {
+    const handleBeforeUnload = () => persistDraft(empForm);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [empForm]);
+
   const handleChange = (setter) => (evt) => {
     const { name, value } = evt.target;
     setter((prev) => ({ ...prev, [name]: value }));
@@ -386,6 +433,41 @@ function App() {
     setActivePage(page);
     setMessage({ type: "", text: "" });
     setSidebarOpen(false);
+  };
+
+  const submitEmployee = async (event) => {
+    event.preventDefault();
+    setSavingEmp(true);
+    setMessage({ type: "", text: "" });
+    try {
+      const formData = new FormData();
+      Object.entries(empForm).forEach(([key, val]) => {
+        if (val === undefined || val === null || val === "") return;
+        formData.append(key, val);
+      });
+
+      const response = await fetch(`${employeeBase}/save/`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.message || "Failed to save employee.");
+      }
+
+      setMessage({ type: "success", text: data.message || "Employee saved." });
+      try {
+        localStorage.removeItem(EMP_DRAFT_KEY);
+      } catch (err) {
+        console.warn("Failed to clear employee draft", err);
+      }
+    } catch (error) {
+      setMessage({ type: "error", text: error.message || "Failed to save employee." });
+    } finally {
+      setSavingEmp(false);
+    }
   };
 
   const handleTabChange = (tab) => {
@@ -535,7 +617,7 @@ function App() {
             options: ["", "single", "married", "divorced", "widowed", "other"],
             warnIfEmpty: true,
           },
-          { name: "nationality", label: "Nationality", warnIfEmpty: true },
+          { name: "nationality", label: "Nationality", warnIfEmpty: true, datalist: ["Bangladeshi"] },
           { name: "town_of_birth", label: "Town of Birth" },
           { name: "child_male", label: "Sons" },
           { name: "child_female", label: "Daughters" },
@@ -636,10 +718,7 @@ function App() {
     const renderEmployeeForm = () => (
       <form
         className="employee-form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          setMessage({ type: "success", text: "Employee draft saved locally." });
-        }}
+        onSubmit={submitEmployee}
       >
         <div className="section-grid">
           {sectionsWithPreview.map((section, index) => {
@@ -699,11 +778,15 @@ function App() {
           })}
         </div>
         <div className="section-actions">
-          <Button type="submit">Save Draft</Button>
+          <Button type="submit" disabled={savingEmp}>
+            {savingEmp ? "Saving..." : "Save"}
+          </Button>
           <Button
             type="button"
             variant="ghost"
-            onClick={() => setEmpForm((prev) => Object.fromEntries(Object.keys(prev).map((k) => [k, ""])))}
+            onClick={() =>
+              setEmpForm(() => initialEmpFormState())
+            }
           >
             Clear Form
           </Button>
