@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils import timezone
 
-from .models import EmpPersonal
+from .models import EmpCategory, EmpPersonal
 
 
 @admin.register(EmpPersonal)
@@ -170,3 +170,27 @@ class EmpPersonalAdmin(admin.ModelAdmin):
             if fname in form.base_fields:
                 form.base_fields[fname].required = True
         return form
+
+
+@admin.register(EmpCategory)
+class EmpCategoryAdmin(admin.ModelAdmin):
+    list_display = ("emp_category_id", "emp_category_name", "bang_emp_type_name", "priority")
+    search_fields = ("emp_category_name", "bang_emp_type_name")
+    readonly_fields = ("created_at", "updated_at", "created_by", "updated_by")
+    fields = (
+        "emp_category_name",
+        "bang_emp_type_name",
+        "priority",
+        "remarks",
+        "created_by",
+        "created_at",
+        "updated_by",
+        "updated_at",
+    )
+
+    def save_model(self, request, obj, form, change):
+        if not obj.created_by:
+            obj.created_by = request.user.username
+        obj.updated_by = request.user.username
+        obj.updated_at = timezone.now()
+        super().save_model(request, obj, form, change)

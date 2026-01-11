@@ -1,0 +1,43 @@
+{% extends "admin/base_site.html" %}
+
+{% block branding %}
+<h1 id="site-name">
+  <a href="{% url 'admin:index' %}">
+    {{ site_header }} — <span id="admin-clock"></span> | {% now "d-M-Y" %}
+  </a>
+</h1>
+<script>
+  (function () {
+    function pad(value) {
+      return value < 10 ? "0" + value : String(value);
+    }
+
+    function updateClock() {
+      var now = new Date();
+      var hours = now.getHours();
+      var minutes = now.getMinutes();
+      var seconds = now.getSeconds();
+      var ampm = hours >= 12 ? "PM" : "AM";
+      var displayHour = hours % 12;
+      if (displayHour === 0) {
+        displayHour = 12;
+      }
+      var time =
+        pad(displayHour) +
+        ":" +
+        pad(minutes) +
+        ":" +
+        pad(seconds) +
+        " " +
+        ampm;
+      var clock = document.getElementById("admin-clock");
+      if (clock) {
+        clock.textContent = time;
+      }
+    }
+
+    updateClock();
+    setInterval(updateClock, 1000);
+  })();
+</script>
+{% endblock %}

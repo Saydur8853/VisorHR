@@ -15,9 +15,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from django.views.generic.base import RedirectView
 from employee import views as employee_views
 
+admin.site.site_header = "Visor Hr administration"
+admin.site.site_title = "Visor Hr administration"
+admin.site.index_title = "Visor Hr administration"
+
 urlpatterns = [
+    path("", RedirectView.as_view(url="/admin/", permanent=False)),
     path("admin/", admin.site.urls),
     path("api/auth/", include("accounts.urls")),
     path("api/employee/save/", employee_views.save_employee, name="save_employee"),

@@ -158,3 +158,24 @@ class EmpPersonal(models.Model):
 
     def __str__(self):
         return self.emp_code or f"Emp {self.emp_id}"
+
+
+class EmpCategory(models.Model):
+    emp_category_id = models.BigAutoField(primary_key=True)
+    emp_category_name = models.CharField(max_length=64)
+    bang_emp_type_name = models.CharField(max_length=64, null=True, blank=True)
+    priority = models.IntegerField(null=True, blank=True)
+    remarks = models.CharField(max_length=32, null=True, blank=True)
+    created_by = models.CharField(max_length=150, null=True, blank=True)
+    created_at = models.DateTimeField(null=True, blank=True, auto_now_add=True)
+    updated_by = models.CharField(max_length=150, null=True, blank=True)
+    updated_at = models.DateTimeField(null=True, blank=True, auto_now=True)
+
+    class Meta:
+        db_table = "EMP_CATEGORY"
+        verbose_name = "Employee Category"
+        verbose_name_plural = "Employee Categories"
+        managed = True
+
+    def __str__(self):
+        return self.emp_category_name
