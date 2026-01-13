@@ -85,6 +85,9 @@ class EmpPersonal(models.Model):
     education = models.CharField(max_length=32, null=True, blank=True)
     employement = models.CharField(max_length=12, null=True, blank=True)  # typo preserved
     nominee_cell_no = models.CharField(max_length=15, null=True, blank=True)
+    nominee_name = models.CharField(max_length=64, null=True, blank=True)
+    nominee_relation = models.CharField(max_length=32, null=True, blank=True)
+    nominee_name_bang = models.CharField(max_length=64, null=True, blank=True)
 
     pre_house_owner = models.CharField(max_length=32, null=True, blank=True)
 
@@ -154,7 +157,7 @@ class EmpPersonal(models.Model):
         db_table = "EMP_PERSONAL"
         verbose_name = "Employee Personal"
         verbose_name_plural = "Employee Personal"
-        managed = False  # existing table created by accounts app
+        managed = True
 
     def __str__(self):
         return self.emp_code or f"Emp {self.emp_id}"
@@ -179,3 +182,48 @@ class EmpCategory(models.Model):
 
     def __str__(self):
         return self.emp_category_name
+
+
+class SigningOption(models.Model):
+    signing_id = models.BigAutoField(primary_key=True)
+    signing_name = models.CharField(max_length=64)
+    emp_code = models.CharField(max_length=10)
+    signing_priority = models.IntegerField(null=True, blank=True)
+    signing_for = models.CharField(max_length=32)
+    signing_status = models.BooleanField(default=True)
+    created_at = models.DateTimeField(null=True, blank=True, auto_now_add=True)
+    updated_at = models.DateTimeField(null=True, blank=True, auto_now=True)
+
+    class Meta:
+        db_table = "SIGNING_OPTION"
+        verbose_name = "Signing Option"
+        verbose_name_plural = "Signing Options"
+        managed = True
+
+    def __str__(self):
+        return self.signing_name
+
+
+class ShiftInfo(models.Model):
+    shift_id = models.BigAutoField(primary_key=True)
+    shift_name = models.CharField(max_length=64)
+    in_time = models.TimeField()
+    allowed_in_time = models.TimeField()
+    out_time = models.TimeField()
+    allowed_out_time = models.TimeField()
+    grace_time = models.IntegerField(null=True, blank=True)
+    grace_out = models.IntegerField(null=True, blank=True)
+    break_start = models.TimeField(null=True, blank=True)
+    break_end = models.TimeField(null=True, blank=True)
+    remarks = models.CharField(max_length=64, null=True, blank=True)
+    created_at = models.DateTimeField(null=True, blank=True, auto_now_add=True)
+    updated_at = models.DateTimeField(null=True, blank=True, auto_now=True)
+
+    class Meta:
+        db_table = "SHIFT_INFO"
+        verbose_name = "Shift Info"
+        verbose_name_plural = "Shift Info"
+        managed = True
+
+    def __str__(self):
+        return self.shift_name

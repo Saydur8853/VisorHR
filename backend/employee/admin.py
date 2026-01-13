@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils import timezone
 
-from .models import EmpCategory, EmpPersonal
+from .models import EmpCategory, EmpPersonal, ShiftInfo, SigningOption
 
 
 @admin.register(EmpPersonal)
@@ -104,6 +104,9 @@ class EmpPersonalAdmin(admin.ModelAdmin):
                     "pasport_no",
                     "tin_no",
                     "nominee_cell_no",
+                    "nominee_name",
+                    "nominee_name_bang",
+                    "nominee_relation",
                     "ref_contact_name",
                     "ref_relation",
                     "ref_address",
@@ -194,3 +197,15 @@ class EmpCategoryAdmin(admin.ModelAdmin):
         obj.updated_by = request.user.username
         obj.updated_at = timezone.now()
         super().save_model(request, obj, form, change)
+
+
+@admin.register(ShiftInfo)
+class ShiftInfoAdmin(admin.ModelAdmin):
+    list_display = ("shift_id", "shift_name", "in_time", "out_time", "allowed_in_time", "allowed_out_time")
+    search_fields = ("shift_name",)
+
+
+@admin.register(SigningOption)
+class SigningOptionAdmin(admin.ModelAdmin):
+    list_display = ("signing_id", "signing_name", "emp_code", "signing_priority", "signing_for", "signing_status")
+    search_fields = ("signing_name", "emp_code", "signing_for")
